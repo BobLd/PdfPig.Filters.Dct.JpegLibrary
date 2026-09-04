@@ -67,7 +67,7 @@ namespace UglyToad.PdfPig.Filters.Dct.JpegLibrary
                  */
                 shouldTransform = decoder.AdobeApplicationSpecific.Value.ColorTransformCode > 0;
             }
-            else if (decoder.HasJfifMarker && decoder.NumberOfComponents == 3)
+            else if (decoder.NumberOfComponents == 3 && (decoder.HasJfifMarker || !HasLiteralRgbComponentIds(decoder)))
             {
                 /*
                  * A JFIF (APP0) marker mandates that 3-component data is encoded as YCbCr, so it
@@ -75,6 +75,10 @@ namespace UglyToad.PdfPig.Filters.Dct.JpegLibrary
                  * in the image dictionary: some producers emit a JFIF YCbCr JPEG while incorrectly
                  * declaring /ColorTransform 0, which would otherwise leave the raw YCbCr samples
                  * untouched and render with a pink/teal cast.
+                 *
+                 * Absent a JFIF marker too, the only legitimate way a 3-component JPEG without any
+                 * Adobe marker holds genuinely untransformed RGB is for its component identifiers to
+                 * literally be 'R', 'G', 'B', see 0966320.pdf
                  */
                 shouldTransform = true;
             }
@@ -133,6 +137,13 @@ namespace UglyToad.PdfPig.Filters.Dct.JpegLibrary
             }
             
             return ycbcr;
+        }
+
+        private static bool HasLiteralRgbComponentIds(JpegDecoder decoder)
+        {
+            return decoder.GetComponentIdentifier(0) == (byte)'R'
+                && decoder.GetComponentIdentifier(1) == (byte)'G'
+                && decoder.GetComponentIdentifier(2) == (byte)'B';
         }
     }
 }

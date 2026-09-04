@@ -557,6 +557,28 @@ namespace UglyToad.PdfPig.Filters.Dct.JpegLibrary.Jpeg
         }
 
         /// <summary>
+        /// Get the component identifier byte for the specified component, as declared in the frame header
+        /// (SOF marker). Conventionally 1/2/3 for JFIF-style YCbCr and 'R'/'G'/'B' (82/71/66) for literal,
+        /// untransformed RGB.
+        /// </summary>
+        /// <param name="componentIndex">The index of the component.</param>
+        /// <returns>The component identifier.</returns>
+        public byte GetComponentIdentifier(int componentIndex)
+        {
+            JpegFrameHeader frameHeader = GetFrameHeader();
+            JpegFrameComponentSpecificationParameters[]? components = frameHeader.Components;
+            if (components is null)
+            {
+                throw new InvalidOperationException();
+            }
+            if ((uint)componentIndex >= (uint)components.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(componentIndex));
+            }
+            return components[componentIndex].Identifier;
+        }
+
+        /// <summary>
         /// Set the output buffer writer.
         /// </summary>
         /// <param name="outputWriter">The output buffer writer.</param>
